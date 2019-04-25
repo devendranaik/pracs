@@ -1,36 +1,70 @@
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
 
-from statistics import mean
-from matplotlib import style
-style.use('ggplot')
+hours = [10, 9, 2, 15, 10, 16, 11, 16]
+risk_score = [95, 80, 10, 50, 45, 98, 38, 93]
 
-data=pd.read_csv('linear_new.csv')
-a=data[data.columns[0]].values
-c=data[data.columns[1]].values
+hours_mean = np.mean(hours)
+print("The mean of hours :", hours_mean)
+risk_score_mean = np.mean(risk_score)
+print("The mean of risk_score :", risk_score_mean)
 
+numerator = 0
+denominator = 0
+for _ in range(len(hours)):
+    numerator += (hours[_] - hours_mean) * (risk_score[_] - risk_score_mean)
+    denominator += (hours[_] - hours_mean)**2
+print("The numerator :", numerator)
+print("The denominator :", denominator)
+b1 = numerator/denominator
+b0 = risk_score_mean - (b1*hours_mean)
+print("b0 (intercept) :", b0)
+print("b1 (Slope) :", b1)
 
-xs=np.array(a,dtype=np.float64)
-ys=np.array(c,dtype=np.float64)
+best_fit_line = []
+for _ in range(len(hours)):
+    best_fit_line.append((b1*hours[_])+b0)
+print("Best fit line :", best_fit_line)
 
+# Plotting the line
+plt.plot(hours, best_fit_line, c='r', label="Line of best fit")
 
-def best_fit_slope_and_intercept(xs, ys):
-    m = (((mean(xs)*mean(ys))-mean(xs*ys)) / ((mean(xs)*mean(xs))-mean(xs*xs)))
-    b = mean(ys)-m*mean(xs)
-    return m, b
+# Plotting the points
+plt.scatter(hours, risk_score, c='b', label="Data points")
 
+# Legend and extra info
+plt.legend(loc="upper left")
+plt.xlabel("Hours")
+plt.ylabel("Risk Score")
+plt.show()
 
-m, b = best_fit_slope_and_intercept(xs,ys)
+# RMSE
+rmse = 0
+for _ in range(len(hours)):
+    rmse += np.square(best_fit_line[_] - risk_score[_])
+print("RMSE :", np.sqrt(rmse/len(hours)))
 
-print("y ="+np.str_(m)+"x+"+np.str_(b))
+# r2/ Coefficient of determination
+ss_r = 0
+ss_t = 0
+for _ in range(len(hours)):
+    ss_r += np.square(best_fit_line[_] - risk_score[_])
+    ss_t += np.square(risk_score[_] - risk_score_mean)
+print("The r2 value :", 1-(ss_r/ss_t))
 
-regression_line = []
-for x in xs:
-    regression_line.append((m*x)+b)
+# Linear Regression using Library
 
-
-plt.scatter(xs,ys,c='g')
-plt.plot(xs,regression_line)
-plt.plot(xs,ys)
+# hours = np.array(hours).reshape(np.array(hours).shape[0], 1)
+hours = np.array(hours).reshape(len(hours), 1)
+model = LinearRegression()
+print(hours)
+model.fit(hours, risk_score)
+print("r2 score:", model.score(hours, risk_score))
+predicted = model.predict(hours)
+plt.plot(hours, predicted, c='r', label="Line of best fit")
+plt.legend("upper left")
+plt.scatter(hours, risk_score, c='b', label="Data points")
+plt.xlabel("Hours")
+plt.ylabel("Risk Score")
 plt.show()
